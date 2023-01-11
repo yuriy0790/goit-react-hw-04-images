@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { GlobalStyleComponent } from 'styles/GlobalStyles';
 
 import { AppWrap } from './AppWrap/AppWrap.styled';
@@ -16,105 +16,87 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-export default class App extends Component {
-  state = {
-    query: '',
-    data: [],
-    page: 1,
-    totalHits: 0,
-    largeImageURL: '',
-    alt: '',
-    error: '',
-    status: '',
-  };
+export default function App() {
+  const [query, setQuery] = useState('');
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [alt, setAlt] = useState('');
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    const prevQuery = prevState.query;
-    const nextQuery = this.state.query;
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
-
-    if (prevQuery !== nextQuery || prevPage !== nextPage) {
-      this.setState({ status: Status.PENDING, error: '' });
-      axiosSearchImages(nextQuery, nextPage)
-        .then(response => {
-          return {
-            data: response.data.hits,
-            totalHits: response.data.totalHits,
-          };
-        })
-        .then(({ data, totalHits }) => {
-          if (!data.length) {
-            this.setState({
-              error:
-                'Sorry, there are no images matching your search query. Please try again.',
-              status: Status.REJECTED,
-            });
-            return;
-          }
-          this.setState(prevState => ({
-            data: [...prevState.data, ...data],
-            totalHits: totalHits,
-            status: Status.RESOLVED,
-          }));
-        })
-        .catch(() =>
-          this.setState({
-            error: 'Something went wrong...',
-            status: Status.REJECTED,
-          })
-        );
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  formSubmitHandler = searchQuery => {
-    this.setState({
-      query: searchQuery,
-      page: 1,
-      data: [],
-    });
+    setStatus(Status.PENDING);
+    setError('');
+    axiosSearchImages(query, page)
+      .then(response => {
+        return {
+          data: response.data.hits,
+          totalHits: response.data.totalHits,
+        };
+      })
+      .then(({ data, totalHits }) => {
+        if (!data.length) {
+          setStatus(Status.REJECTED);
+          setError(
+            'Sorry, there are no images matching your search query. Please try again.'
+          );
+          return;
+        }
+
+        setStatus(Status.RESOLVED);
+        setTotalHits(totalHits);
+        setData(prevData => [...prevData, ...data]);
+      })
+      .catch(() => {
+        setStatus(Status.REJECTED);
+        setError('Something went wrong...');
+      });
+  }, [query, page]);
+
+  const formSubmitHandler = searchQuery => {
+    setQuery(searchQuery);
+    setPage(1);
+    setData([]);
   };
 
-  onImgClick = (largeImageURL, alt) => {
-    this.setState({ largeImageURL, alt });
+  const onImgClick = (largeImageURL, alt) => {
+    setLargeImageURL(largeImageURL);
+    setAlt(alt);
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const loadMore = () => {
+    setPage(page => page + 1);
   };
 
-  render() {
-    const { query, data, totalHits, largeImageURL, alt, error, status } =
-      this.state;
-
-    const isBtnShown =
-      error === '' && totalHits !== 0 && totalHits > data.length;
-
-    return (
-      <>
-        <AppWrap>
-          <SearchBar onSubmit={this.formSubmitHandler} />
-          <ImageGallery data={data} onImgClick={this.onImgClick} />
-          {status === 'pending' && (
-            <>
-              <Loader />
-              <p>Loading images by query: {query} ...</p>
-            </>
-          )}
-          {(status === 'rejected' || error) && <p>{error}</p>}
-          {isBtnShown && <Button loadMore={this.loadMore} />}
-        </AppWrap>
-        {this.state.largeImageURL && (
-          <Modal
-            alt={alt}
-            largeImageURL={largeImageURL}
-            onImgClick={this.onImgClick}
-          />
+  const isBtnShown = error === '' && totalHits !== 0 && totalHits > data.length;
+  return (
+    <>
+      <AppWrap>
+        <SearchBar onSubmit={formSubmitHandler} />
+        <ImageGallery data={data} onImgClick={onImgClick} />
+        {status === 'pending' && (
+          <>
+            <Loader />
+            <p>Loading images by query: {query} ...</p>
+          </>
         )}
-        <GlobalStyleComponent />
-      </>
-    );
-  }
+        {(status === 'rejected' || error) && <p>{error}</p>}
+        {isBtnShown && <Button loadMore={loadMore} />}
+      </AppWrap>
+      {largeImageURL && (
+        <Modal
+          alt={alt}
+          largeImageURL={largeImageURL}
+          onImgClick={onImgClick}
+        />
+      )}
+      <GlobalStyleComponent />
+    </>
+  );
 }
