@@ -32,15 +32,15 @@ export default function App() {
     }
 
     setStatus(Status.PENDING);
-    setError('');
+    // setError('');
     axiosSearchImages(query, page)
-      .then(response => {
-        return {
-          data: response.data.hits,
-          totalHits: response.data.totalHits,
-        };
-      })
-      .then(({ data, totalHits }) => {
+      // .then(response => {
+      //   return {
+      //     data: response.data.hits,
+      //     totalHits: response.data.totalHits,
+      //   };
+      // })
+      .then(({ data: { hits: data, totalHits } }) => {
         if (!data.length) {
           setStatus(Status.REJECTED);
           setError(
@@ -49,9 +49,9 @@ export default function App() {
           return;
         }
 
-        setStatus(Status.RESOLVED);
         setTotalHits(totalHits);
         setData(prevData => [...prevData, ...data]);
+        setStatus(Status.RESOLVED);
       })
       .catch(() => {
         setStatus(Status.REJECTED);
@@ -63,6 +63,7 @@ export default function App() {
     setQuery(searchQuery);
     setPage(1);
     setData([]);
+    setError('');
   };
 
   const onImgClick = (largeImageURL, alt) => {
