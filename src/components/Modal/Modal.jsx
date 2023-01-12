@@ -19,7 +19,6 @@ export default function Modal({ largeImageURL, alt, onImgClick }) {
     }
   };
 
-  // Не розумію чи правильно замінено componentDidMount i componentWillUnmount на useEffect але наче працює
   useEffect(() => {
     const handleKeyDown = e => {
       console.log('keydown', e.code);
@@ -38,7 +37,11 @@ export default function Modal({ largeImageURL, alt, onImgClick }) {
 
   return createPortal(
     <div className={styles.Overlay} onClick={handleBackdropClick}>
-      {showSpinner === true && <Loader />}
+      {showSpinner && (
+        <div style={{ zIndex: 2, position: 'absolute' }}>
+          <Loader />
+        </div>
+      )}
       <div className={styles.Modal}>
         <img id="largeImage" src={largeImageURL} alt={alt} />
       </div>

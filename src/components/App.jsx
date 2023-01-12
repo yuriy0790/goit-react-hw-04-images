@@ -32,15 +32,9 @@ export default function App() {
     }
 
     setStatus(Status.PENDING);
-    // setError('');
+
     axiosSearchImages(query, page)
-      // .then(response => {
-      //   return {
-      //     data: response.data.hits,
-      //     totalHits: response.data.totalHits,
-      //   };
-      // })
-      .then(({ data: { hits: data, totalHits } }) => {
+      .then(({ hits: data, totalHits }) => {
         if (!data.length) {
           setStatus(Status.REJECTED);
           setError(
@@ -64,6 +58,7 @@ export default function App() {
     setPage(1);
     setData([]);
     setError('');
+    setTotalHits(0);
   };
 
   const onImgClick = (largeImageURL, alt) => {
